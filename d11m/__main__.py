@@ -1,5 +1,6 @@
 import sys
 
+from .dataset import Dataset
 from .tokenizer import decode, encode
 
 
@@ -20,9 +21,15 @@ def _get_input_from_argv(argv: list[str]) -> str:
 if __name__ == '__main__':
     input_text = _get_input_from_argv(sys.argv)
 
-    encoded = encode(input_text)
-    decoded = decode(encoded)
+    tokens= encode(input_text)
+    decoded_tokens = decode(tokens)
 
     print('original:', input_text)
-    print('encoded: ', encoded)
-    print('decoded: ', decoded)
+    print('encoded: ', tokens)
+    print('decoded: ', decoded_tokens)
+
+    dataset = Dataset(tokens, context_size=4)
+
+    for input_tokens, target_tokens in dataset:
+        print(input_tokens)
+        print(target_tokens)
