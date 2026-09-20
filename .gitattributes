@@ -1,0 +1,22 @@
+# Normalize text files to LF, regardless of the contributor's operating system.
+* text=auto eol=lf
+
+# Use Git's Python-aware diff headers.
+*.py diff=python
+
+# Keep common binary assets out of text conversion and text diffs.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.7z binary
+*.npy binary
+*.npz binary
+*.pt binary
+*.pth binary
+*.safetensors binary
