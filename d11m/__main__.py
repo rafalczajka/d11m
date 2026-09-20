@@ -33,20 +33,28 @@ if __name__ == '__main__':
     print('encoded: ', tokens)
     print('decoded: ', decoded_tokens)
 
-    dataset = Dataset(
-        torch.tensor(tokens, dtype=torch.long),
-        context_size=4,
-    )
+    context_size = 4
+    embedding_dim = 32
+
+    dataset = Dataset(torch.tensor(tokens, dtype=torch.long), context_size)
 
     dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
-    token_embedding = nn.Embedding(tokenizer.vocab_size, embedding_dim=32)
+
+    token_embedding = nn.Embedding(tokenizer.vocab_size, embedding_dim)
+    position_embedding = nn.Embedding(context_size, embedding_dim)
 
     for input_tokens, target_tokens in dataloader:
-        input_embeddings = token_embedding(input_tokens)
+        token_embeddings = token_embedding(input_tokens)
+
+        positions = torch.arange(input_tokens.shape[1])
+        position_embeddings = position_embedding(positions)
+
+        embeddings  = token_embeddings + position_embeddings
 
         print('input_tokens.shape:', input_tokens.shape)
         print('target_tokens.shape:', target_tokens.shape)
         print('input tokens: ', input_tokens[0])
         print('target tokens:', target_tokens[0])
-        print('input_embeddings.shape:', input_embeddings.shape)
+        print('token_embeddings.shape:', token_embeddings.shape)
+        print(embeddings.shape)
         break

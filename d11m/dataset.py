@@ -3,7 +3,7 @@ from torch.utils.data import Dataset as TorchDataset
 
 
 class Dataset(TorchDataset[tuple[Tensor, Tensor]]):
-    def __init__(self, tokens: Tensor, *, context_size: int) -> None:
+    def __init__(self, tokens: Tensor, context_size: int) -> None:
         self.tokens = tokens
         self.context_size = context_size
 
