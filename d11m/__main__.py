@@ -24,7 +24,7 @@ def _get_input_from_argv(argv: list[str]) -> str:
 if __name__ == '__main__':
     input_text = _get_input_from_argv(sys.argv)
 
-    tokens= encode(input_text)
+    tokens = encode(input_text)
     decoded_tokens = decode(tokens)
 
     print('original:', input_text)
@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     dataset = Dataset(
         torch.tensor(tokens, dtype=torch.long),
-        context_size=4
+        context_size=4,
     )
 
     dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
