@@ -1,10 +1,12 @@
 import sys
 
 import torch
+from torch import nn
 from torch.utils.data import DataLoader
 
+from d11m import tokenizer
+
 from .dataset import Dataset
-from .tokenizer import decode, encode
 
 
 def _get_input_from_argv(argv: list[str]) -> str:
@@ -24,8 +26,8 @@ def _get_input_from_argv(argv: list[str]) -> str:
 if __name__ == '__main__':
     input_text = _get_input_from_argv(sys.argv)
 
-    tokens = encode(input_text)
-    decoded_tokens = decode(tokens)
+    tokens = tokenizer.encode(input_text)
+    decoded_tokens = tokenizer.decode(tokens)
 
     print('original:', input_text)
     print('encoded: ', tokens)
@@ -37,10 +39,14 @@ if __name__ == '__main__':
     )
 
     dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+    token_embedding = nn.Embedding(tokenizer.vocab_size, embedding_dim=32)
 
     for input_tokens, target_tokens in dataloader:
+        input_embeddings = token_embedding(input_tokens)
+
         print('input_tokens.shape:', input_tokens.shape)
         print('target_tokens.shape:', target_tokens.shape)
         print('input tokens: ', input_tokens[0])
         print('target tokens:', target_tokens[0])
+        print('input_embeddings.shape:', input_embeddings.shape)
         break
