@@ -1,6 +1,8 @@
-def encode(text):
-    return list(text.encode("utf-8"))
+ENCODING = 'utf-8'
 
-def decode(tokens):
+def encode(text: str) -> list[int]:
+    return list(text.encode(ENCODING))
+
+def decode(tokens: list[int]) -> str:
     tokens = [t for t in tokens if t < 256]
-    return bytes(tokens).decode("utf-8", errors="replace")
+    return bytes(tokens).decode(ENCODING, errors='replace')
