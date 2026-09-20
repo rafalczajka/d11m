@@ -1,5 +1,8 @@
 import sys
 
+import torch
+from torch.utils.data import DataLoader
+
 from .dataset import Dataset
 from .tokenizer import decode, encode
 
@@ -28,8 +31,16 @@ if __name__ == '__main__':
     print('encoded: ', tokens)
     print('decoded: ', decoded_tokens)
 
-    dataset = Dataset(tokens, context_size=4)
+    dataset = Dataset(
+        torch.tensor(tokens, dtype=torch.long),
+        context_size=4
+    )
 
-    for input_tokens, target_tokens in dataset:
-        print('input tokens: ', input_tokens)
-        print('target tokens:', target_tokens)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+
+    for input_tokens, target_tokens in dataloader:
+        print('input_tokens.shape:', input_tokens.shape)
+        print('target_tokens.shape:', target_tokens.shape)
+        print('input tokens: ', input_tokens[0])
+        print('target tokens:', target_tokens[0])
+        break
