@@ -31,5 +31,5 @@ if __name__ == '__main__':
     dataset = Dataset(tokens, context_size=4)
 
     for input_tokens, target_tokens in dataset:
-        print(input_tokens)
-        print(target_tokens)
+        print('input tokens: ', input_tokens)
+        print('target tokens:', target_tokens)

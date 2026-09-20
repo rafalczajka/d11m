@@ -1,4 +1,7 @@
-class Dataset:
+from torch.utils.data import Dataset as TorchDataset
+
+
+class Dataset(TorchDataset):
     def __init__(self, tokens, *, context_size):
         self.tokens = tokens
         self.context_size = context_size
