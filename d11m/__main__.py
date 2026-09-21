@@ -41,7 +41,8 @@ def generate(
             tokenizer.BOS,
             *tokenizer.encode(prompt),
         ],
-        dtype=torch.long
+        dtype=torch.long,
+        device=next(model.parameters()).device,
     )
 
     with torch.no_grad():
@@ -50,9 +51,7 @@ def generate(
             input_tokens = input_tokens.unsqueeze(0)
 
             logits = model(input_tokens)
-
             last_token_logits = logits[0, -1]
-
             next_token = torch.argmax(last_token_logits)
 
             if next_token.item() == tokenizer.EOS:
@@ -68,6 +67,9 @@ def generate(
 
 if __name__ == '__main__':
     input_text = _get_input_from_argv(sys.argv)
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f'Device: {device}')
 
     tokens = [
         tokenizer.BOS,
@@ -91,7 +93,7 @@ if __name__ == '__main__':
         context_size=CONTEXT_SIZE,
         embedding_dim=EMBEDDING_DIMENSION,
         number_of_layers=NUMBER_OF_LAYERS,
-    )
+    ).to(device)
 
     optimizer = torch.optim.AdamW(
         model.parameters(),
@@ -102,6 +104,9 @@ if __name__ == '__main__':
         total_loss = 0.0
 
         for input_tokens, target_tokens in data_loader:
+            input_tokens = input_tokens.to(device)
+            target_tokens = target_tokens.to(device)
+
             optimizer.zero_grad()
 
             logits = model(input_tokens)
