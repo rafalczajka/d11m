@@ -3,9 +3,9 @@ import sys
 import torch
 from torch.utils.data import DataLoader
 
-from d11m import tokenizer
-from d11m.dataset import Dataset
-from d11m.model import Model
+from . import tokenizer
+from .dataset import Dataset
+from .model import Model
 
 CONTEXT_SIZE = 4
 BATCH_SIZE = 32

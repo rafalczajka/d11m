@@ -1,5 +1,7 @@
 from torch import Tensor, arange, nn
 
+from .self_attention import SelfAttention
+
 
 class Model(nn.Module):
     def __init__(self, vocab_size: int, context_size: int, embedding_dim: int) -> None:
@@ -8,8 +10,11 @@ class Model(nn.Module):
         self.token_embedding = nn.Embedding(vocab_size, embedding_dim)
         self.position_embedding = nn.Embedding(context_size, embedding_dim)
 
+        self.attention = SelfAttention(embedding_dim)
+
     def forward(self, input_tokens: Tensor) -> Tensor:
-        return self._create_embeddings(input_tokens)
+        embeddings = self._create_embeddings(input_tokens)
+        return self.attention(embeddings)
 
     def _create_embeddings(self, input_tokens: Tensor) -> Tensor:
         token_embeddings = self.token_embedding(input_tokens)
