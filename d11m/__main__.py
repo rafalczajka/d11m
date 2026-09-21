@@ -29,9 +29,51 @@ def _get_input_from_argv(argv: list[str]) -> str:
     return argv[1]
 
 
+def generate(
+    model: Model,
+    prompt: str,
+    max_new_tokens: int,
+) -> str:
+    model.eval()
+
+    tokens = torch.tensor(
+        [
+            tokenizer.BOS,
+            *tokenizer.encode(prompt),
+        ],
+        dtype=torch.long
+    )
+
+    with torch.no_grad():
+        for _ in range(max_new_tokens):
+            input_tokens = tokens[-model.context_size:]
+            input_tokens = input_tokens.unsqueeze(0)
+
+            logits = model(input_tokens)
+
+            last_token_logits = logits[0, -1]
+
+            next_token = torch.argmax(last_token_logits)
+
+            if next_token.item() == tokenizer.EOS:
+                break
+
+            tokens = torch.cat([
+                tokens,
+                next_token.unsqueeze(0)
+            ])
+
+    return tokenizer.decode(tokens.tolist())
+
+
 if __name__ == '__main__':
     input_text = _get_input_from_argv(sys.argv)
-    tokens = tokenizer.encode(input_text)
+
+    tokens = [
+        tokenizer.BOS,
+        *tokenizer.encode(input_text),
+        tokenizer.EOS,
+    ]
 
     dataset = Dataset(
         torch.tensor(tokens, dtype=torch.long),
@@ -79,3 +121,11 @@ if __name__ == '__main__':
             f"Epoch {epoch + 1}/{EPOCHS}, "
             f"loss: {average_loss:.4f}"
         )
+
+    generated = generate(
+        model,
+        prompt="Ala ",
+        max_new_tokens=100
+    )
+
+    print(generated)

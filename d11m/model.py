@@ -13,6 +13,8 @@ class Model(nn.Module):
     ) -> None:
         super().__init__()
 
+        self.context_size: int = context_size
+
         self.token_embedding = nn.Embedding(vocab_size, embedding_dim)
         self.position_embedding = nn.Embedding(context_size, embedding_dim)
 

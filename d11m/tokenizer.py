@@ -14,4 +14,5 @@ def encode(text: str) -> list[int]:
 
 
 def decode(tokens: list[int]) -> str:
-    return bytes(tokens).decode(_ENCODING, errors='replace')
+    text_tokens = [token for token in tokens if token < PAD]
+    return bytes(text_tokens).decode(_ENCODING, errors='replace')
