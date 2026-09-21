@@ -26,7 +26,6 @@ class Model(nn.Module):
 
     def forward(self, input_tokens: Tensor) -> Tensor:
         embeddings = self._create_embeddings(input_tokens)
-        embeddings = embeddings + self.attention(self.attention_norm(embeddings))
 
         for transformer in self.transformers:
             embeddings = transformer(embeddings)
