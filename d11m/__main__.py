@@ -102,6 +102,7 @@ if __name__ == '__main__':
 
     for epoch in range(EPOCHS):
         total_loss = 0.0
+        total_tokens = 0
 
         for input_tokens, target_tokens in data_loader:
             input_tokens = input_tokens.to(device)
@@ -118,9 +119,11 @@ if __name__ == '__main__':
 
             loss.backward()
             optimizer.step()
-            total_loss += loss.item()
+            batch_tokens = target_tokens.numel()
+            total_loss += loss.item() * batch_tokens
+            total_tokens += batch_tokens
 
-        average_loss = total_loss / len(data_loader)
+        average_loss = total_loss / total_tokens
 
         print(
             f"Epoch {epoch + 1}/{EPOCHS}, "
