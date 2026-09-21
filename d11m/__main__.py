@@ -1,13 +1,18 @@
 import sys
+from pathlib import Path
 
 import torch
+from torch import Tensor
 from torch.utils.data import DataLoader
 
 from . import tokenizer
+from .checkpoint import load_model, save_model
 from .dataset import Dataset
 from .generation import generate
 from .model import Model
 from .training import train
+
+CHECKPOINT_PATH = Path(__file__).resolve().parent.parent / 'model.pt'
 
 CONTEXT_SIZE = 4
 BATCH_SIZE = 32
@@ -30,7 +35,7 @@ def _get_input_from_argv(argv: list[str]) -> str:
     return argv[1]
 
 
-def _create_data_loader(tokens: list[int]) -> DataLoader:
+def _create_data_loader(tokens: list[int]) -> DataLoader[tuple[Tensor, Tensor]]:
     dataset = Dataset(
         torch.tensor(tokens, dtype=torch.long),
         context_size=CONTEXT_SIZE,
@@ -43,11 +48,27 @@ def _create_data_loader(tokens: list[int]) -> DataLoader:
     )
 
 
-if __name__ == '__main__':
-    input_text = _get_input_from_argv(sys.argv)
+def _generate_output(model: Model) -> None:
+    generated = generate(
+        model,
+        prompt="Ala ",
+        max_new_tokens=100
+    )
 
+    print('Generated:', generated)
+
+
+def main(argv: list[str]) -> None:
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Device: {device}')
+
+    if CHECKPOINT_PATH.exists():
+        model = load_model(CHECKPOINT_PATH, device)
+        print(f'Loaded model: {CHECKPOINT_PATH}')
+        _generate_output(model)
+        return
+
+    input_text = _get_input_from_argv(argv)
 
     tokens = [
         tokenizer.BOS,
@@ -65,11 +86,12 @@ if __name__ == '__main__':
     ).to(device)
 
     train(model, data_loader, epochs=EPOCHS)
+    save_model(model, CHECKPOINT_PATH)
 
-    generated = generate(
-        model,
-        prompt="Ala ",
-        max_new_tokens=100
-    )
+    print(f'Saved model: {CHECKPOINT_PATH}')
 
-    print('Generated:', generated)
+    _generate_output(model)
+
+
+if __name__ == '__main__':
+    main(sys.argv)
