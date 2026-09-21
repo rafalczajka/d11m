@@ -7,6 +7,10 @@ from d11m import tokenizer
 from d11m.dataset import Dataset
 from d11m.model import Model
 
+CONTEXT_SIZE = 4
+BATCH_SIZE = 32
+EMBEDDING_DIMENSION = 64
+
 
 def _get_input_from_argv(argv: list[str]) -> str:
     argv_len = len(argv)
@@ -26,25 +30,21 @@ if __name__ == '__main__':
     input_text = _get_input_from_argv(sys.argv)
     tokens = tokenizer.encode(input_text)
 
-    context_size = 4
-    embedding_dim = 64
-    batch_size = 32
-
-    model = Model(
-        vocab_size=tokenizer.VOCAB_SIZE,
-        context_size=context_size,
-        embedding_dim=embedding_dim,
-    )
-
     dataset = Dataset(
         torch.tensor(tokens, dtype=torch.long),
-        context_size=context_size
+        context_size=CONTEXT_SIZE
     )
 
     data_loader = DataLoader(
         dataset,
-        batch_size=batch_size,
+        batch_size=BATCH_SIZE,
         shuffle=True
+    )
+
+    model = Model(
+        vocab_size=tokenizer.VOCAB_SIZE,
+        context_size=CONTEXT_SIZE,
+        embedding_dim=EMBEDDING_DIMENSION,
     )
 
     for input_tokens, target_tokens in data_loader:
