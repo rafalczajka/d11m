@@ -1,13 +1,13 @@
 import sys
 
 import torch
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from . import tokenizer
 from .dataset import Dataset
 from .generation import generate
 from .model import Model
+from .training import train
 
 CONTEXT_SIZE = 4
 BATCH_SIZE = 32
@@ -30,6 +30,19 @@ def _get_input_from_argv(argv: list[str]) -> str:
     return argv[1]
 
 
+def _create_data_loader(tokens: list[int]) -> DataLoader:
+    dataset = Dataset(
+        torch.tensor(tokens, dtype=torch.long),
+        context_size=CONTEXT_SIZE,
+    )
+
+    return DataLoader(
+        dataset,
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+    )
+
+
 if __name__ == '__main__':
     input_text = _get_input_from_argv(sys.argv)
 
@@ -42,16 +55,7 @@ if __name__ == '__main__':
         tokenizer.EOS,
     ]
 
-    dataset = Dataset(
-        torch.tensor(tokens, dtype=torch.long),
-        context_size=CONTEXT_SIZE,
-    )
-
-    data_loader = DataLoader(
-        dataset,
-        batch_size=BATCH_SIZE,
-        shuffle=True,
-    )
+    data_loader = _create_data_loader(tokens)
 
     model = Model(
         vocab_size=tokenizer.VOCAB_SIZE,
@@ -60,40 +64,7 @@ if __name__ == '__main__':
         number_of_layers=NUMBER_OF_LAYERS,
     ).to(device)
 
-    optimizer = torch.optim.AdamW(
-        model.parameters(),
-        lr=0.001,
-    )
-
-    for epoch in range(EPOCHS):
-        total_loss = 0.0
-        total_tokens = 0
-
-        for input_tokens, target_tokens in data_loader:
-            input_tokens = input_tokens.to(device)
-            target_tokens = target_tokens.to(device)
-
-            optimizer.zero_grad()
-
-            logits = model(input_tokens)
-
-            loss = F.cross_entropy(
-                logits.reshape(-1, tokenizer.VOCAB_SIZE),
-                target_tokens.reshape(-1),
-            )
-
-            loss.backward()
-            optimizer.step()
-            batch_tokens = target_tokens.numel()
-            total_loss += loss.item() * batch_tokens
-            total_tokens += batch_tokens
-
-        average_loss = total_loss / total_tokens
-
-        print(
-            f"Epoch {epoch + 1}/{EPOCHS}, "
-            f"loss: {average_loss:.4f}"
-        )
+    train(model, data_loader, epochs=EPOCHS)
 
     generated = generate(
         model,
@@ -101,4 +72,4 @@ if __name__ == '__main__':
         max_new_tokens=100
     )
 
-    print(generated)
+    print('Generated:', generated)
