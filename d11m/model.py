@@ -1,6 +1,6 @@
 from torch import Tensor, arange, nn
 
-from .self_attention import SelfAttention
+from .transformer import Transformer
 
 
 class Model(nn.Module):
@@ -10,11 +10,12 @@ class Model(nn.Module):
         self.token_embedding = nn.Embedding(vocab_size, embedding_dim)
         self.position_embedding = nn.Embedding(context_size, embedding_dim)
 
-        self.attention = SelfAttention(embedding_dim)
+        self.transformer = Transformer(embedding_dim)
 
     def forward(self, input_tokens: Tensor) -> Tensor:
         embeddings = self._create_embeddings(input_tokens)
-        return self.attention(embeddings)
+        embeddings = embeddings + self.attention(self.attention_norm(embeddings))
+        embeddings = self.transformer(embeddings)
 
     def _create_embeddings(self, input_tokens: Tensor) -> Tensor:
         token_embeddings = self.token_embedding(input_tokens)
