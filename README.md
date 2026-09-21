@@ -1,4 +1,9 @@
-# d11m
+# d11m (Dumb LLM)
+
+An LLM built for fun and learning purposes. It uses a
+GPT-like Transformer architecture to predict the next token.
+
+## Architecture
 
 <div align="center">
 <pre>
