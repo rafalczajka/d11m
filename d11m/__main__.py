@@ -31,7 +31,7 @@ if __name__ == '__main__':
     batch_size = 32
 
     model = Model(
-        vocab_size=tokenizer.vocab_size,
+        vocab_size=tokenizer.VOCAB_SIZE,
         context_size=context_size,
         embedding_dim=embedding_dim,
     )

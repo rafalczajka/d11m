@@ -1,12 +1,17 @@
-ENCODING = 'utf-8'
+PAD = 256
+BOS = 257
+EOS = 258
+QUESTION = 259
+ANSWER = 260
 
+VOCAB_SIZE = 261
 
-vocab_size = 256
+_ENCODING = 'utf-8'
 
 
 def encode(text: str) -> list[int]:
-    return list(text.encode(ENCODING))
+    return list(text.encode(_ENCODING))
 
 
 def decode(tokens: list[int]) -> str:
-    return bytes(tokens).decode(ENCODING, errors='replace')
+    return bytes(tokens).decode(_ENCODING, errors='replace')
