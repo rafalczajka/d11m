@@ -221,3 +221,4 @@ __marimo__/
 
 # Local trained model
 /model.pt
+/checkpoints/
