@@ -4,17 +4,20 @@ from pathlib import Path
 import torch
 from torch import Tensor
 from torch.utils.data import DataLoader
+from tqdm.auto import tqdm
 
 from .. import tokenizer
 from ..checkpoint import save_model
 from ..dataset import Dataset
 from ..model import Model
-from ..training import train
+from ..training import train_gen
 from ._common import CHECKPOINT_PATH, get_device, positive_int
 
 
 def _create_data_loader(
-    tokens: list[int], context_size: int, batch_size: int,
+    tokens: list[int],
+    context_size: int,
+    batch_size: int,
 ) -> DataLoader[tuple[Tensor, Tensor]]:
     dataset = Dataset(
         torch.tensor(tokens, dtype=torch.long),
@@ -26,6 +29,18 @@ def _create_data_loader(
         batch_size=batch_size,
         shuffle=True,
     )
+
+
+def _train_and_show_progress(
+    model: Model,
+    data_loader: DataLoader[tuple[Tensor, Tensor]],
+    epochs: int,
+) -> None:
+    with tqdm(total=epochs * len(data_loader), unit='batch') as progress:
+        for epoch, average_loss in train_gen(model, data_loader, epochs=epochs):
+            progress.set_description(f'Epoch {epoch}/{epochs}', refresh=False)
+            progress.set_postfix(loss=f'{average_loss:.4f}', refresh=False)
+            progress.update(1)
 
 
 def configure_parser(parser: ArgumentParser) -> None:
@@ -61,7 +76,7 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
         number_of_layers=args.number_of_layers,
     ).to(device)
 
-    train(model, data_loader, epochs=args.epochs)
+    _train_and_show_progress(model, data_loader, epochs=args.epochs)
 
     save_model(model, args.checkpoint)
     print(f'Saved model: {args.checkpoint}')
