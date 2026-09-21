@@ -36,6 +36,13 @@ def generate(
 ) -> str:
     model.eval()
 
+    ignored_tokens = [
+        tokenizer.PAD,
+        tokenizer.BOS,
+        tokenizer.QUESTION,
+        tokenizer.ANSWER,
+    ]
+
     tokens = torch.tensor(
         [
             tokenizer.BOS,
@@ -52,6 +59,7 @@ def generate(
 
             logits = model(input_tokens)
             last_token_logits = logits[0, -1]
+            last_token_logits[ignored_tokens] = float('-inf')
             next_token = torch.argmax(last_token_logits)
 
             if next_token.item() == tokenizer.EOS:
