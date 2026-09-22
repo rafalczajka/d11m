@@ -1,7 +1,9 @@
 # d11m (Dumb LLM)
 
-An LLM built for fun and learning purposes. It uses a
-GPT-like Transformer architecture.
+An LLM built for fun and learning purposes. It uses a GPT-like Transformer architecture.
+
+> [!WARNING]  
+> Work in progress.
 
 ## Architecture
 
