@@ -35,7 +35,7 @@ def generate(
             logits = model(input_tokens)
             last_token_logits = logits[0, -1]
             last_token_logits[ignored_tokens] = float('-inf')
-            next_token = torch.argmax(last_token_logits)
+            next_token = torch.argmax(last_token_logits) # TODO: use softmax
 
             if next_token.item() == tokenizer.EOS:
                 break
