@@ -4,7 +4,7 @@ from .attention import CausalSelfAttention
 from .mlp import MLP
 
 
-class Transformer(nn.Module):
+class TransformerBlock(nn.Module):
     def __init__(self, embedding_dim: int) -> None:
         super().__init__()
 
@@ -18,4 +18,3 @@ class Transformer(nn.Module):
         embeddings = embeddings + self.attention(self.attention_norm(embeddings))
         embeddings = embeddings + self.mlp(self.mlp_norm(embeddings))
         return embeddings
-

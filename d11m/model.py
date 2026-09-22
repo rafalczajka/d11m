@@ -1,6 +1,6 @@
 from torch import Tensor, arange, nn
 
-from .transformer import Transformer
+from .transformer import TransformerBlock
 
 
 class Model(nn.Module):
@@ -19,7 +19,7 @@ class Model(nn.Module):
         self.position_embedding = nn.Embedding(context_size, embedding_dim)
 
         self.transformers = nn.ModuleList([
-            Transformer(embedding_dim)
+            TransformerBlock(embedding_dim)
             for _ in range(number_of_layers)
         ])
 
