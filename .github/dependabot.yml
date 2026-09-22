@@ -1,0 +1,21 @@
+version: 2
+
+registries:
+  pytorch-cu132:
+    type: python-index
+    url: https://download.pytorch.org/whl/cu132
+
+updates:
+  - package-ecosystem: pip
+    directory: /
+    registries:
+      - pytorch-cu132
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
