@@ -20,8 +20,8 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
     device = get_device()
     print(f'Device: {device}')
 
-    model = load_model(args.checkpoint, device)
+    model, tokenizer = load_model(args.checkpoint, device)
 
-    generated = generate(model, prompt=args.prompt, max_new_tokens=args.max_new_tokens)
+    generated = generate(model, tokenizer, prompt=args.prompt, max_new_tokens=args.max_new_tokens)
 
     print('Generated:', generated)

@@ -5,7 +5,6 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.utils.data import DataLoader
 
-from . import tokenizer
 from .model import Model
 
 DEFAULT_LEARNING_RATE = 0.001
@@ -53,7 +52,7 @@ def train_gen(
             logits = model(input_tokens)
 
             loss = F.cross_entropy(
-                logits.reshape(-1, tokenizer.VOCAB_SIZE),
+                logits.reshape(-1, logits.shape[-1]),
                 target_tokens.reshape(-1),
             )
 

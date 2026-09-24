@@ -1,8 +1,8 @@
 import torch
 from torch import Tensor
 
-from . import tokenizer
 from .model import Model
+from .tokenizer import ByteBPETokenizer
 
 SOFTMAX_TEMPERATURE = 0.8
 
@@ -27,6 +27,7 @@ def _get_next_token(
 
 def generate(
     model: Model,
+    tokenizer: ByteBPETokenizer,
     prompt: str,
     max_new_tokens: int,
 ) -> str:

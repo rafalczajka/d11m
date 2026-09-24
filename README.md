@@ -33,6 +33,6 @@ LayerNorm
 ↓
 Linear
 ↓
-Softmax
+(Softmax)
 </pre>
 </div>

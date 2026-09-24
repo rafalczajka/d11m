@@ -6,12 +6,13 @@ from torch import Tensor
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
-from .. import tokenizer
-from ..checkpoint import save_model
+from ..checkpoint import load_tokenizer, save_model
 from ..dataset import Dataset
 from ..model import Model
 from ..training import train_gen
 from ._common import CHECKPOINT_PATH, get_device, positive_int
+
+DEFAULT_TOKENIZER_FILE = 'tokenizer.json'
 
 
 def _create_data_loader(
@@ -45,6 +46,7 @@ def _train_and_show_progress(
 
 def configure_parser(parser: ArgumentParser) -> None:
     parser.add_argument('text', help='Training text.')
+    parser.add_argument('--tokenizer', type=Path, default=DEFAULT_TOKENIZER_FILE)
     parser.add_argument('--context-size', type=positive_int, default=128)
     parser.add_argument('--batch-size', type=positive_int, default=32)
     parser.add_argument('--embedding-dim', type=positive_int, default=128)
@@ -58,6 +60,8 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
     device = get_device()
     print(f'Device: {device}')
 
+    tokenizer = load_tokenizer(args.tokenizer)
+
     tokens = [
         tokenizer.BOS,
         *tokenizer.encode(args.text),
@@ -70,7 +74,7 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
     data_loader = _create_data_loader(tokens, args.context_size, args.batch_size)
 
     model = Model(
-        vocab_size=tokenizer.VOCAB_SIZE,
+        vocab_size=tokenizer.vocab_size,
         context_size=args.context_size,
         embedding_dim=args.embedding_dim,
         number_of_layers=args.number_of_layers,
@@ -78,5 +82,5 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
 
     _train_and_show_progress(model, data_loader, epochs=args.epochs)
 
-    save_model(model, args.checkpoint)
+    save_model(model, tokenizer, args.checkpoint)
     print(f'Saved model: {args.checkpoint}')
