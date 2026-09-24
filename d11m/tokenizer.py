@@ -1,5 +1,7 @@
+import codecs
 import itertools
 from collections import Counter
+from collections.abc import Iterable, Iterator
 
 
 class ByteBPETokenizer:
@@ -85,7 +87,10 @@ class ByteBPETokenizer:
         return tokens
 
     def decode(self, tokens: list[int]) -> str:
-        data = bytearray()
+        return ''.join(self.decode_stream(tokens))
+
+    def decode_stream(self, tokens: Iterable[int]) -> Iterator[str]:
+        decoder = codecs.getincrementaldecoder('utf-8')(errors='replace')
 
         special_tokens = {
             self.PAD,
@@ -104,9 +109,15 @@ class ByteBPETokenizer:
             if token_bytes is None:
                 raise ValueError(f"Unknown token: {token}")
 
-            data.extend(token_bytes)
+            text = decoder.decode(token_bytes)
 
-        return data.decode('utf-8', errors='replace')
+            if text:
+                yield text
+
+        remaining_text = decoder.decode(b'', final=True)
+
+        if remaining_text:
+            yield remaining_text
 
     def _get_best_pair(self, tokens: list[int]) -> tuple[int, int] | None:
         best_pair = None

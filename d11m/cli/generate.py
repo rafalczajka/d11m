@@ -2,7 +2,7 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
 from ..checkpoint import load_model
-from ..generation import generate
+from ..generation import generate_gen
 from ._common import CHECKPOINT_PATH, get_device, positive_int
 
 
@@ -22,6 +22,10 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
 
     model, tokenizer = load_model(args.checkpoint, device)
 
-    generated = generate(model, tokenizer, prompt=args.prompt, max_new_tokens=args.max_new_tokens)
+    print('Generated:', args.prompt, end='', flush=True)
+    tokens = generate_gen(model, tokenizer, args.prompt, args.max_new_tokens)
 
-    print('Generated:', generated)
+    for text in tokenizer.decode_stream(tokens):
+        print(text, end='', flush=True)
+
+    print()
