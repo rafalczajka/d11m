@@ -13,7 +13,6 @@ class ByteBPETokenizer:
 
     def __init__(self) -> None:
         self.merges: dict[tuple[int, int], int] = {}
-        self.merge_ranks: dict[tuple[int, int], int] = {}
 
         self.vocab: dict[int, bytes] = {
             token_id: bytes([token_id])
@@ -37,7 +36,6 @@ class ByteBPETokenizer:
             raise ValueError("min_frequency must be positive")
 
         self.merges.clear()
-        self.merge_ranks.clear()
         self.vocab = {token_id: bytes([token_id]) for token_id in range(256)}
 
         tokens = list(text.encode('utf-8'))
@@ -45,7 +43,7 @@ class ByteBPETokenizer:
         next_token_id = self.FIRST_MERGE_TOKEN
 
         while next_token_id < vocab_size:
-            pair_counts = self._count_pairs(tokens)
+            pair_counts = Counter(itertools.pairwise(tokens))
 
             if not pair_counts:
                 break
@@ -55,19 +53,16 @@ class ByteBPETokenizer:
             if frequency < min_frequency:
                 break
 
-            new_token_id = next_token_id
-
-            self.merges[best_pair] = new_token_id
-            self.merge_ranks[best_pair] = len(self.merge_ranks)
+            self.merges[best_pair] = next_token_id
 
             left_token, right_token = best_pair
 
-            self.vocab[new_token_id] = (self.vocab[left_token] + self.vocab[right_token])
+            self.vocab[next_token_id] = (self.vocab[left_token] + self.vocab[right_token])
 
             tokens = self._merge_pair(
                 tokens=tokens,
                 pair=best_pair,
-                new_token=new_token_id,
+                new_token=next_token_id,
             )
 
             next_token_id += 1
@@ -113,22 +108,19 @@ class ByteBPETokenizer:
 
         return data.decode('utf-8', errors='replace')
 
-    def _count_pairs(self, tokens: list[int]) -> Counter[tuple[int, int]]:
-        return Counter(itertools.pairwise(tokens))
-
     def _get_best_pair(self, tokens: list[int]) -> tuple[int, int] | None:
         best_pair = None
-        best_rank = None
+        best_token_id = None
 
         for pair in itertools.pairwise(tokens):
-            rank = self.merge_ranks.get(pair)
+            token_id = self.merges.get(pair)
 
-            if rank is None:
+            if token_id is None:
                 continue
 
-            if best_rank is None or rank < best_rank:
+            if best_token_id is None or token_id < best_token_id:
                 best_pair = pair
-                best_rank = rank
+                best_token_id = token_id
 
         return best_pair
 

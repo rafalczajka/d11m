@@ -54,11 +54,10 @@ def _create_tokenizer(merges: list[list[int]]) -> ByteBPETokenizer:
         key = (left, right)
         token_id = ByteBPETokenizer.FIRST_MERGE_TOKEN + rank
         tokenizer.merges[key] = token_id
-        tokenizer.merge_ranks[key] = rank
         tokenizer.vocab[token_id] = tokenizer.vocab[left] + tokenizer.vocab[right]
 
     return tokenizer
 
 
 def _get_tokenizer_merge_list(tokenizer: ByteBPETokenizer) -> list[list[int]]:
-    return [list(pair) for pair in sorted(tokenizer.merges, key=tokenizer.merge_ranks.__getitem__)]
+    return [list(pair) for pair in sorted(tokenizer.merges, key=tokenizer.merges.__getitem__)]
