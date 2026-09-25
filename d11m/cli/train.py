@@ -58,7 +58,7 @@ def configure_parser(parser: ArgumentParser) -> None:
 
 def run(args: Namespace, parser: ArgumentParser) -> None:
     if not args.tokenizer.is_file():
-        parser.error(f'Tokenizer not found: {args.tokenizer}. Run train-tokenizer first.')
+        parser.error(f'Tokenizer not found: {args.tokenizer}. Run tokenizer train first.')
 
     device = get_device()
     print(f'Device: {device}')

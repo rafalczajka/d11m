@@ -1,13 +1,13 @@
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
-from ..checkpoint import save_tokenizer
-from ..tokenizer import ByteBPETokenizer
-from ._common import positive_int
+from ...checkpoint import save_tokenizer
+from ...tokenizer import ByteBPETokenizer
+from .._common import positive_int
 
 
 def configure_parser(parser: ArgumentParser) -> None:
-    parser.add_argument('text', help='Training text only; exclude validation data.')
+    parser.add_argument('text', help='Training text.')
     parser.add_argument('--vocab-size', type=positive_int, default=4096)
     parser.add_argument('--min-frequency', type=positive_int, default=2)
     parser.add_argument('--output', type=Path, default=Path('tokenizer.json'))
