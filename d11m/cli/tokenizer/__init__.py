@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-from . import decode, encode, train
+from . import decode, encode, train, vocab
 
 __all__ = ['configure_parser']
 
@@ -10,3 +10,4 @@ def configure_parser(parser: ArgumentParser) -> None:
     train.configure_parser(commands.add_parser('train', help='Train a BPE tokenizer.'))
     encode.configure_parser(commands.add_parser('encode', help='Show token IDs and bytes.'))
     decode.configure_parser(commands.add_parser('decode', help='Decode token IDs to text.'))
+    vocab.configure_parser(commands.add_parser('vocab', help='Export a readable vocabulary to JSON.'))
