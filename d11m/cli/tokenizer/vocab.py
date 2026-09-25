@@ -12,13 +12,6 @@ def configure_parser(parser: ArgumentParser) -> None:
     parser.set_defaults(handler=run, command_parser=parser)
 
 
-def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
-    validate_tokenizer_path(args.tokenizer, parser)
-
-    if args.output.resolve() == args.tokenizer.resolve():
-        parser.error('Vocabulary output must not overwrite the tokenizer file.')
-
-
 def run(args: Namespace, parser: ArgumentParser) -> None:
     _validate_args(args, parser)
 
@@ -45,3 +38,10 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
     )
 
     print(f'Saved vocabulary: {args.output} ({len(vocabulary)} tokens)')
+
+
+def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
+    validate_tokenizer_path(args.tokenizer, parser)
+
+    if args.output.resolve() == args.tokenizer.resolve():
+        parser.error('Vocabulary output must not overwrite the tokenizer file.')

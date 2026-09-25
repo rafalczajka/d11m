@@ -22,11 +22,6 @@ def save_model(model: Model, tokenizer: ByteBPETokenizer, path: Path) -> None:
     )
 
 
-def save_tokenizer(tokenizer: ByteBPETokenizer, path: Path) -> None:
-    merges = _get_tokenizer_merge_list(tokenizer)
-    path.write_text(json.dumps(merges, indent=2), encoding='utf-8')
-
-
 def load_model(path: Path, device: torch.device) -> tuple[Model, ByteBPETokenizer]:
     checkpoint = torch.load(path, map_location=device, weights_only=True)
     config = checkpoint['config']
@@ -39,11 +34,20 @@ def load_model(path: Path, device: torch.device) -> tuple[Model, ByteBPETokenize
     return model, tokenizer
 
 
+def save_tokenizer(tokenizer: ByteBPETokenizer, path: Path) -> None:
+    merges = _get_tokenizer_merge_list(tokenizer)
+    path.write_text(json.dumps(merges, indent=2), encoding='utf-8')
+
+
 def load_tokenizer(path: Path) -> ByteBPETokenizer:
     with path.open(encoding='utf-8') as f:
         data = json.load(f)
 
     return _create_tokenizer(data)
+
+
+def _get_tokenizer_merge_list(tokenizer: ByteBPETokenizer) -> list[list[int]]:
+    return [list(pair) for pair in sorted(tokenizer.merges, key=tokenizer.merges.__getitem__)]
 
 
 def _create_tokenizer(merges: list[list[int]]) -> ByteBPETokenizer:
@@ -57,7 +61,3 @@ def _create_tokenizer(merges: list[list[int]]) -> ByteBPETokenizer:
         tokenizer.vocab[token_id] = tokenizer.vocab[left] + tokenizer.vocab[right]
 
     return tokenizer
-
-
-def _get_tokenizer_merge_list(tokenizer: ByteBPETokenizer) -> list[list[int]]:
-    return [list(pair) for pair in sorted(tokenizer.merges, key=tokenizer.merges.__getitem__)]

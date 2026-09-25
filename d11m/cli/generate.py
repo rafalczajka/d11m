@@ -14,11 +14,6 @@ def configure_parser(parser: ArgumentParser) -> None:
     parser.set_defaults(handler=run, command_parser=parser)
 
 
-def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
-    if not args.checkpoint.is_file():
-        parser.error(f'Checkpoint not found: {args.checkpoint}. Run train first.')
-
-
 def run(args: Namespace, parser: ArgumentParser) -> None:
     _validate_args(args, parser)
 
@@ -34,3 +29,8 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
         print(text, end='', flush=True)
 
     print()
+
+
+def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
+    if not args.checkpoint.is_file():
+        parser.error(f'Checkpoint not found: {args.checkpoint}. Run train first.')

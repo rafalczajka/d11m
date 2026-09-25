@@ -11,10 +11,6 @@ def configure_parser(parser: ArgumentParser) -> None:
     parser.set_defaults(handler=run, command_parser=parser)
 
 
-def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
-    validate_tokenizer_path(args.tokenizer, parser)
-
-
 def run(args: Namespace, parser: ArgumentParser) -> None:
     _validate_args(args, parser)
 
@@ -22,3 +18,7 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
     text = tokenizer.decode(args.tokens)
 
     print(text)
+
+
+def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
+    validate_tokenizer_path(args.tokenizer, parser)

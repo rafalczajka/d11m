@@ -9,24 +9,6 @@ from .tokenizer import ByteBPETokenizer
 SOFTMAX_TEMPERATURE = 0.8
 
 
-def _get_next_token(
-    logits: Tensor,
-    temperature: float,
-) -> Tensor:
-    if temperature <= 0:
-        raise ValueError("Temperature must be greater than 0")
-
-    probabilities = torch.softmax(
-        logits / temperature,
-        dim=-1
-    )
-
-    return torch.multinomial(
-        probabilities,
-        num_samples=1
-    ).squeeze(0)
-
-
 def generate(
     model: Model,
     tokenizer: ByteBPETokenizer,
@@ -84,3 +66,21 @@ def generate_gen(
             ])
 
         yield token_id
+
+
+def _get_next_token(
+    logits: Tensor,
+    temperature: float,
+) -> Tensor:
+    if temperature <= 0:
+        raise ValueError("Temperature must be greater than 0")
+
+    probabilities = torch.softmax(
+        logits / temperature,
+        dim=-1
+    )
+
+    return torch.multinomial(
+        probabilities,
+        num_samples=1
+    ).squeeze(0)

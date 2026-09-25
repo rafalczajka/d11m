@@ -16,35 +16,6 @@ from ._validation import positive_int, validate_tokenizer_path
 DEFAULT_TOKENIZER_FILE = 'tokenizer.json'
 
 
-def _create_data_loader(
-    tokens: list[int],
-    context_size: int,
-    batch_size: int,
-) -> DataLoader[tuple[Tensor, Tensor]]:
-    dataset = Dataset(
-        torch.tensor(tokens, dtype=torch.long),
-        context_size=context_size,
-    )
-
-    return DataLoader(
-        dataset,
-        batch_size=batch_size,
-        shuffle=True,
-    )
-
-
-def _train_and_show_progress(
-    model: Model,
-    data_loader: DataLoader[tuple[Tensor, Tensor]],
-    epochs: int,
-) -> None:
-    with tqdm(total=epochs * len(data_loader), unit='batch') as progress:
-        for epoch, average_loss in train_gen(model, data_loader, epochs=epochs):
-            progress.set_description(f'Epoch {epoch}/{epochs}', refresh=False)
-            progress.set_postfix(loss=f'{average_loss:.4f}', refresh=False)
-            progress.update(1)
-
-
 def configure_parser(parser: ArgumentParser) -> None:
     parser.add_argument('text', help='Training text.')
     parser.add_argument('--tokenizer', type=Path, default=DEFAULT_TOKENIZER_FILE)
@@ -55,10 +26,6 @@ def configure_parser(parser: ArgumentParser) -> None:
     parser.add_argument('--number-of-layers', type=positive_int, default=4)
     parser.add_argument('--checkpoint', type=Path, default=CHECKPOINT_PATH)
     parser.set_defaults(handler=run, command_parser=parser)
-
-
-def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
-    validate_tokenizer_path(args.tokenizer, parser)
 
 
 def run(args: Namespace, parser: ArgumentParser) -> None:
@@ -91,3 +58,36 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
 
     save_model(model, tokenizer, args.checkpoint)
     print(f'Saved model: {args.checkpoint}')
+
+
+def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
+    validate_tokenizer_path(args.tokenizer, parser)
+
+
+def _create_data_loader(
+    tokens: list[int],
+    context_size: int,
+    batch_size: int,
+) -> DataLoader[tuple[Tensor, Tensor]]:
+    dataset = Dataset(
+        torch.tensor(tokens, dtype=torch.long),
+        context_size=context_size,
+    )
+
+    return DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=True,
+    )
+
+
+def _train_and_show_progress(
+    model: Model,
+    data_loader: DataLoader[tuple[Tensor, Tensor]],
+    epochs: int,
+) -> None:
+    with tqdm(total=epochs * len(data_loader), unit='batch') as progress:
+        for epoch, average_loss in train_gen(model, data_loader, epochs=epochs):
+            progress.set_description(f'Epoch {epoch}/{epochs}', refresh=False)
+            progress.set_postfix(loss=f'{average_loss:.4f}', refresh=False)
+            progress.update(1)

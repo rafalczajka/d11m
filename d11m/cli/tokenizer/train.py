@@ -14,11 +14,6 @@ def configure_parser(parser: ArgumentParser) -> None:
     parser.set_defaults(handler=run, command_parser=parser)
 
 
-def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
-    if args.vocab_size < ByteBPETokenizer.FIRST_MERGE_TOKEN:
-        parser.error(f'--vocab-size must be at least {ByteBPETokenizer.FIRST_MERGE_TOKEN}.')
-
-
 def run(args: Namespace, parser: ArgumentParser) -> None:
     _validate_args(args, parser)
 
@@ -29,3 +24,8 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
     save_tokenizer(tokenizer, args.output)
 
     print(f'Saved tokenizer: {args.output} (vocabulary size: {tokenizer.vocab_size})')
+
+
+def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
+    if args.vocab_size < ByteBPETokenizer.FIRST_MERGE_TOKEN:
+        parser.error(f'--vocab-size must be at least {ByteBPETokenizer.FIRST_MERGE_TOKEN}.')
