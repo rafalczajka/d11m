@@ -3,7 +3,7 @@ from pathlib import Path
 
 from ...checkpoint import save_tokenizer
 from ...tokenizer import ByteBPETokenizer
-from .._common import positive_int
+from .._validation import positive_int
 
 
 def configure_parser(parser: ArgumentParser) -> None:
@@ -14,7 +14,14 @@ def configure_parser(parser: ArgumentParser) -> None:
     parser.set_defaults(handler=run, command_parser=parser)
 
 
+def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
+    if args.vocab_size < ByteBPETokenizer.FIRST_MERGE_TOKEN:
+        parser.error(f'--vocab-size must be at least {ByteBPETokenizer.FIRST_MERGE_TOKEN}.')
+
+
 def run(args: Namespace, parser: ArgumentParser) -> None:
+    _validate_args(args, parser)
+
     tokenizer = ByteBPETokenizer()
 
     tokenizer.train(args.text, args.vocab_size, args.min_frequency)

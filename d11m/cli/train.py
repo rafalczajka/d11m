@@ -10,7 +10,8 @@ from ..checkpoint import load_tokenizer, save_model
 from ..dataset import Dataset
 from ..model import Model
 from ..training import train_gen
-from ._common import CHECKPOINT_PATH, get_device, positive_int
+from ._common import CHECKPOINT_PATH, get_device
+from ._validation import positive_int, validate_tokenizer_path
 
 DEFAULT_TOKENIZER_FILE = 'tokenizer.json'
 
@@ -56,9 +57,12 @@ def configure_parser(parser: ArgumentParser) -> None:
     parser.set_defaults(handler=run, command_parser=parser)
 
 
+def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
+    validate_tokenizer_path(args.tokenizer, parser)
+
+
 def run(args: Namespace, parser: ArgumentParser) -> None:
-    if not args.tokenizer.is_file():
-        parser.error(f'Tokenizer not found: {args.tokenizer}. Run tokenizer train first.')
+    _validate_args(args, parser)
 
     device = get_device()
     print(f'Device: {device}')

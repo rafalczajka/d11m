@@ -3,7 +3,8 @@ from pathlib import Path
 
 from ..checkpoint import load_model
 from ..generation import generate_gen
-from ._common import CHECKPOINT_PATH, get_device, positive_int
+from ._common import CHECKPOINT_PATH, get_device
+from ._validation import positive_int
 
 
 def configure_parser(parser: ArgumentParser) -> None:
@@ -13,9 +14,13 @@ def configure_parser(parser: ArgumentParser) -> None:
     parser.set_defaults(handler=run, command_parser=parser)
 
 
-def run(args: Namespace, parser: ArgumentParser) -> None:
+def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
     if not args.checkpoint.is_file():
         parser.error(f'Checkpoint not found: {args.checkpoint}. Run train first.')
+
+
+def run(args: Namespace, parser: ArgumentParser) -> None:
+    _validate_args(args, parser)
 
     device = get_device()
     print(f'Device: {device}')
