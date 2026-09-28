@@ -1,0 +1,19 @@
+line-length = 120
+force-exclude = true
+
+[lint]
+select = [
+  "E",   # Style errors
+  "F",   # Unused imports, undefined names, etc.
+  "I",   # Import ordering
+  "UP",  # Modern Python syntax
+  "B",   # Common bugs and suspicious patterns
+  "C4",  # Better comprehensions
+  "SIM", # Code simplifications
+  "ANN", # Type annotations
+  "N",   # Naming conventions
+  "TCH", # Type-checking-only imports
+]
+
+[format]
+quote-style = "single"
