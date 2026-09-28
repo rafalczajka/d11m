@@ -3,6 +3,7 @@ from pathlib import Path
 
 import torch
 from torch import Tensor
+from torch.optim import AdamW, Optimizer
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
@@ -14,6 +15,7 @@ from ._common import CHECKPOINT_PATH, get_device
 from ._validation import positive_int, validate_tokenizer_path
 
 DEFAULT_TOKENIZER_FILE = 'tokenizer.json'
+LEARNING_RATE = 0.001
 
 
 def configure_parser(parser: ArgumentParser) -> None:
@@ -54,7 +56,17 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
         number_of_layers=args.number_of_layers,
     ).to(device)
 
-    _train_and_show_progress(model, data_loader, epochs=args.epochs)
+    optimizer = AdamW(
+        model.parameters(),
+        lr=LEARNING_RATE,
+    )
+
+    _train_and_show_progress(
+        model,
+        data_loader,
+        epochs=args.epochs,
+        optimizer=optimizer,
+    )
 
     save_model(model, tokenizer, args.checkpoint)
     print(f'Saved model: {args.checkpoint}')
@@ -85,9 +97,17 @@ def _train_and_show_progress(
     model: Model,
     data_loader: DataLoader[tuple[Tensor, Tensor]],
     epochs: int,
+    optimizer: Optimizer,
 ) -> None:
+    results = train_gen(
+        model,
+        data_loader,
+        epochs=epochs,
+        optimizer=optimizer,
+    )
+
     with tqdm(total=epochs * len(data_loader), unit='batch') as progress:
-        for epoch, average_loss in train_gen(model, data_loader, epochs=epochs):
+        for epoch, average_loss in results:
             progress.set_description(f'Epoch {epoch}/{epochs}', refresh=False)
             progress.set_postfix(loss=f'{average_loss:.4f}', refresh=False)
             progress.update(1)

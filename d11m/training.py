@@ -3,22 +3,21 @@ from collections.abc import Iterator
 import torch
 import torch.nn.functional as F
 from torch import Tensor
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 
 from .model import Model
-
-DEFAULT_LEARNING_RATE = 0.001
 
 
 def train(
     model: Model,
     data_loader: DataLoader[tuple[Tensor, Tensor]],
     epochs: int,
-    learning_rate: float = DEFAULT_LEARNING_RATE,
+    optimizer: Optimizer,
 ) -> float:
     last_loss = 0.0
 
-    for _, average_loss in train_gen(model, data_loader, epochs, learning_rate):
+    for _, average_loss in train_gen(model, data_loader, epochs, optimizer):
         last_loss = average_loss
 
     return last_loss
@@ -28,16 +27,11 @@ def train_gen(
     model: Model,
     data_loader: DataLoader[tuple[Tensor, Tensor]],
     epochs: int,
-    learning_rate: float = DEFAULT_LEARNING_RATE,
+    optimizer: Optimizer,
 ) -> Iterator[tuple[int, float]]:
     model.train()
 
     device = next(model.parameters()).device
-
-    optimizer = torch.optim.AdamW(
-        model.parameters(),
-        lr=learning_rate,
-    )
 
     for epoch in range(epochs):
         total_loss = 0.0
