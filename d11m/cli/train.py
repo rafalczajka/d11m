@@ -41,7 +41,7 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
     tokens = [
         tokenizer.BOS,
         *tokenizer.encode(args.text),
-        tokenizer.EOS
+        tokenizer.EOS,
     ]
 
     if len(tokens) <= args.context_size:

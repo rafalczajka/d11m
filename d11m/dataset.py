@@ -17,6 +17,6 @@ class Dataset(TorchDataset[tuple[Tensor, Tensor]]):
         end_index = index + self.context_size
 
         input_tokens = self.tokens[index:end_index]
-        target_tokens = self.tokens[index + 1:end_index + 1]
+        target_tokens = self.tokens[index + 1 : end_index + 1]
 
         return input_tokens, target_tokens

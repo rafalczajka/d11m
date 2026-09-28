@@ -17,18 +17,17 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
 
     tokenizer = load_tokenizer(args.tokenizer)
 
-    vocabulary = {
-        token: data.decode('utf-8', errors='backslashreplace')
-        for token, data in tokenizer.vocab.items()
-    }
+    vocabulary = {token: data.decode('utf-8', errors='backslashreplace') for token, data in tokenizer.vocab.items()}
 
-    vocabulary.update({
-        tokenizer.PAD: '<PAD>',
-        tokenizer.BOS: '<BOS>',
-        tokenizer.EOS: '<EOS>',
-        tokenizer.QUESTION: '<QUESTION>',
-        tokenizer.ANSWER: '<ANSWER>',
-    })
+    vocabulary.update(
+        {
+            tokenizer.PAD: '<PAD>',
+            tokenizer.BOS: '<BOS>',
+            tokenizer.EOS: '<EOS>',
+            tokenizer.QUESTION: '<QUESTION>',
+            tokenizer.ANSWER: '<ANSWER>',
+        }
+    )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
 

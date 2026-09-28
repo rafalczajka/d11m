@@ -15,5 +15,9 @@ select = [
   "TCH", # Type-checking-only imports
 ]
 
+ignore = [
+  "N812", # Allow conventional aliases such as torch.nn.functional as F
+]
+
 [format]
 quote-style = "single"

@@ -45,7 +45,7 @@ def generate_gen(
 
     for _ in range(max_new_tokens):
         with torch.no_grad():
-            input_tokens = tokens[-model.context_size:]
+            input_tokens = tokens[-model.context_size :]
             input_tokens = input_tokens.unsqueeze(0)
 
             logits = model(input_tokens)
@@ -60,10 +60,7 @@ def generate_gen(
             if token_id == tokenizer.EOS:
                 break
 
-            tokens = torch.cat([
-                tokens,
-                next_token.unsqueeze(0)
-            ])
+            tokens = torch.cat([tokens, next_token.unsqueeze(0)])
 
         yield token_id
 
@@ -73,14 +70,14 @@ def _get_next_token(
     temperature: float,
 ) -> Tensor:
     if temperature <= 0:
-        raise ValueError("Temperature must be greater than 0")
+        raise ValueError('Temperature must be greater than 0')
 
     probabilities = torch.softmax(
         logits / temperature,
-        dim=-1
+        dim=-1,
     )
 
     return torch.multinomial(
         probabilities,
-        num_samples=1
+        num_samples=1,
     ).squeeze(0)

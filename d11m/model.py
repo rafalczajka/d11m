@@ -9,7 +9,7 @@ class Model(nn.Module):
         vocab_size: int,
         context_size: int,
         embedding_dim: int,
-        number_of_layers: int
+        number_of_layers: int,
     ) -> None:
         super().__init__()
 
@@ -18,10 +18,9 @@ class Model(nn.Module):
         self.token_embedding = nn.Embedding(vocab_size, embedding_dim)
         self.position_embedding = nn.Embedding(context_size, embedding_dim)
 
-        self.transformers = nn.ModuleList([
-            TransformerBlock(embedding_dim)
-            for _ in range(number_of_layers)
-        ])
+        self.transformers = nn.ModuleList(
+            [TransformerBlock(embedding_dim) for _ in range(number_of_layers)],
+        )
 
         self.final_norm = nn.LayerNorm(embedding_dim)
         self.output_layer = nn.Linear(embedding_dim, vocab_size)

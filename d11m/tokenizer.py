@@ -15,11 +15,7 @@ class ByteBPETokenizer:
 
     def __init__(self) -> None:
         self.merges: dict[tuple[int, int], int] = {}
-
-        self.vocab: dict[int, bytes] = {
-            token_id: bytes([token_id])
-            for token_id in range(256)
-        }
+        self.vocab: dict[int, bytes] = {token_id: bytes([token_id]) for token_id in range(256)}
 
     @property
     def vocab_size(self) -> int:
@@ -32,10 +28,10 @@ class ByteBPETokenizer:
         min_frequency: int = 2,
     ) -> None:
         if vocab_size < self.FIRST_MERGE_TOKEN:
-            raise ValueError(f"vocab_size must be at least {self.FIRST_MERGE_TOKEN}")
+            raise ValueError(f'vocab_size must be at least {self.FIRST_MERGE_TOKEN}')
 
         if min_frequency < 1:
-            raise ValueError("min_frequency must be positive")
+            raise ValueError('min_frequency must be positive')
 
         self.merges.clear()
         self.vocab = {token_id: bytes([token_id]) for token_id in range(256)}
@@ -59,7 +55,7 @@ class ByteBPETokenizer:
 
             left_token, right_token = best_pair
 
-            self.vocab[next_token_id] = (self.vocab[left_token] + self.vocab[right_token])
+            self.vocab[next_token_id] = self.vocab[left_token] + self.vocab[right_token]
 
             tokens = self._merge_pair(
                 tokens=tokens,
@@ -107,7 +103,7 @@ class ByteBPETokenizer:
             token_bytes = self.vocab.get(token)
 
             if token_bytes is None:
-                raise ValueError(f"Unknown token: {token}")
+                raise ValueError(f'Unknown token: {token}')
 
             text = decoder.decode(token_bytes)
 
@@ -145,11 +141,7 @@ class ByteBPETokenizer:
         index = 0
 
         while index < len(tokens):
-            if (
-                index < len(tokens) - 1
-                and tokens[index] == pair[0]
-                and tokens[index + 1] == pair[1]
-            ):
+            if index < len(tokens) - 1 and tokens[index] == pair[0] and tokens[index + 1] == pair[1]:
                 result.append(new_token)
                 index += 2
                 continue
