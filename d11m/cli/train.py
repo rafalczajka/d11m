@@ -7,12 +7,13 @@ from torch.optim import AdamW, Optimizer
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
-from ..checkpoint import load_tokenizer, save_model
+from ..checkpoint import load_checkpoint, load_tokenizer, save_checkpoint
 from ..dataset import Dataset
 from ..model import Model
+from ..tokenizer import ByteBPETokenizer
 from ..training import train_gen
 from ._common import CHECKPOINT_PATH, get_device
-from ._validation import positive_int, validate_tokenizer_path
+from ._validation import positive_int, validate_checkpoint_path, validate_tokenizer_path
 
 DEFAULT_TOKENIZER_FILE = 'tokenizer.json'
 LEARNING_RATE = 0.001
@@ -27,7 +28,50 @@ def configure_parser(parser: ArgumentParser) -> None:
     parser.add_argument('--epochs', type=positive_int, default=10)
     parser.add_argument('--number-of-layers', type=positive_int, default=4)
     parser.add_argument('--checkpoint', type=Path, default=CHECKPOINT_PATH)
+    parser.add_argument('--resume', action='store_true')
     parser.set_defaults(handler=run, command_parser=parser)
+
+
+def _create_training_components(
+    tokenizer_path: Path,
+    context_size: int,
+    embedding_dim: int,
+    number_of_layers: int,
+    device: torch.device,
+) -> tuple[Model, ByteBPETokenizer, Optimizer]:
+    tokenizer = load_tokenizer(tokenizer_path)
+
+    model = Model(
+        vocab_size=tokenizer.vocab_size,
+        context_size=context_size,
+        embedding_dim=embedding_dim,
+        number_of_layers=number_of_layers,
+    ).to(device)
+
+    optimizer = AdamW(
+        model.parameters(),
+        lr=LEARNING_RATE,
+    )
+
+    return model, tokenizer, optimizer
+
+
+def _load_training_components(
+    checkpoint_path: Path,
+    device: torch.device,
+) -> tuple[Model, ByteBPETokenizer, Optimizer]:
+    model, tokenizer, optimizer_state = load_checkpoint(checkpoint_path, device)
+
+    optimizer = AdamW(
+        model.parameters(),
+        lr=LEARNING_RATE,
+    )
+
+    optimizer.load_state_dict(
+        optimizer_state
+    )
+
+    return model, tokenizer, optimizer
 
 
 def run(args: Namespace, parser: ArgumentParser) -> None:
@@ -36,7 +80,19 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
     device = get_device()
     print(f'Device: {device}')
 
-    tokenizer = load_tokenizer(args.tokenizer)
+    if args.resume:
+        model, tokenizer, optimizer = _load_training_components(
+            checkpoint_path=args.checkpoint,
+            device=device,
+        )
+    else:
+        model, tokenizer, optimizer = _create_training_components(
+            tokenizer_path=args.tokenizer,
+            context_size=args.context_size,
+            embedding_dim=args.embedding_dim,
+            number_of_layers=args.number_of_layers,
+            device=device,
+        )
 
     tokens = [
         tokenizer.BOS,
@@ -44,36 +100,31 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
         tokenizer.EOS,
     ]
 
-    if len(tokens) <= args.context_size:
-        parser.error('Training text with BOS and EOS must be longer than --context-size.')
+    if len(tokens) <= model.context_size:
+        parser.error('Training text with BOS and EOS must be longer than context size.')
 
-    data_loader = _create_data_loader(tokens, args.context_size, args.batch_size)
-
-    model = Model(
-        vocab_size=tokenizer.vocab_size,
-        context_size=args.context_size,
-        embedding_dim=args.embedding_dim,
-        number_of_layers=args.number_of_layers,
-    ).to(device)
-
-    optimizer = AdamW(
-        model.parameters(),
-        lr=LEARNING_RATE,
+    data_loader = _create_data_loader(
+        tokens=tokens,
+        context_size=model.context_size,
+        batch_size=args.batch_size,
     )
 
     _train_and_show_progress(
-        model,
-        data_loader,
+        model=model,
+        data_loader=data_loader,
         epochs=args.epochs,
         optimizer=optimizer,
     )
 
-    save_model(model, tokenizer, args.checkpoint)
+    save_checkpoint(model, tokenizer, optimizer=optimizer, path=args.checkpoint)
     print(f'Saved model: {args.checkpoint}')
 
 
 def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
-    validate_tokenizer_path(args.tokenizer, parser)
+    if args.resume:
+        validate_checkpoint_path(args.checkpoint, parser)
+    else:
+        validate_tokenizer_path(args.tokenizer, parser)
 
 
 def _create_data_loader(

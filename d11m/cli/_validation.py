@@ -11,6 +11,11 @@ def positive_int(value: str) -> int:
     return number
 
 
+def validate_checkpoint_path(path: Path, parser: ArgumentParser) -> None:
+    if not path.is_file():
+        parser.error(f'Checkpoint not found: {path}.')
+
+
 def validate_tokenizer_path(path: Path, parser: ArgumentParser) -> None:
     if not path.is_file():
         parser.error(f'Tokenizer not found: {path}. Run tokenizer train first.')

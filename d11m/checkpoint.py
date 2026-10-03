@@ -2,12 +2,18 @@ import json
 from pathlib import Path
 
 import torch
+from torch.optim import Optimizer
 
 from .model import Model
 from .tokenizer import ByteBPETokenizer
 
 
-def save_model(model: Model, tokenizer: ByteBPETokenizer, path: Path) -> None:
+def save_checkpoint(
+    model: Model,
+    tokenizer: ByteBPETokenizer,
+    optimizer: Optimizer,
+    path: Path,
+) -> None:
     torch.save(
         {
             'config': {
@@ -16,13 +22,14 @@ def save_model(model: Model, tokenizer: ByteBPETokenizer, path: Path) -> None:
                 'number_of_layers': len(model.transformers),
             },
             'state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
             'tokenizer': _get_tokenizer_merge_list(tokenizer),
         },
         path,
     )
 
 
-def load_model(path: Path, device: torch.device) -> tuple[Model, ByteBPETokenizer]:
+def load_checkpoint(path: Path, device: torch.device) -> tuple[Model, ByteBPETokenizer, dict]:
     checkpoint = torch.load(path, map_location=device, weights_only=True)
     config = checkpoint['config']
 
@@ -31,6 +38,16 @@ def load_model(path: Path, device: torch.device) -> tuple[Model, ByteBPETokenize
     model.load_state_dict(checkpoint['state_dict'])
 
     model.eval()
+
+    return (
+        model,
+        tokenizer,
+        checkpoint['optimizer_state_dict'],
+    )
+
+
+def load_model(path: Path, device: torch.device) -> tuple[Model, ByteBPETokenizer]:
+    model, tokenizer, _ = load_checkpoint(path, device)
     return model, tokenizer
 
 
