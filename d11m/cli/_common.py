@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from pathlib import Path
 
 import torch
+from tqdm.auto import tqdm
 
 from ..data import load_texts as load_data_texts
 
@@ -21,9 +22,16 @@ def load_texts(
     has_text = False
 
     try:
-        for text in load_data_texts(
+        texts = load_data_texts(
             dataset,
             max_samples=max_samples,
+        )
+
+        for text in tqdm(
+            texts,
+            total=max_samples,
+            desc='Loading data',
+            unit='sample',
         ):
             has_text = True
             yield text

@@ -1,11 +1,14 @@
 from argparse import ArgumentParser
 
+from ..data import configure_huggingface_output
 from . import generate, tokenizer, train
 
 __all__ = ['main']
 
 
 def main(argv: list[str] | None = None) -> None:
+    configure_huggingface_output()
+
     parser = ArgumentParser(description='Train a small language model or generate text.')
 
     commands = parser.add_subparsers(dest='command', required=True)

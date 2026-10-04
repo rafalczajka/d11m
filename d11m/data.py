@@ -2,7 +2,10 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from itertools import islice
 
-from datasets import load_dataset
+from datasets import disable_progress_bars, load_dataset
+from datasets.utils import logging as datasets_logging
+from huggingface_hub import logging as hub_logging
+from huggingface_hub.utils import disable_progress_bars as disable_hub_progress_bars
 
 
 @dataclass(frozen=True)
@@ -50,3 +53,11 @@ def load_texts(
 
         if text.strip():
             yield text
+
+
+def configure_huggingface_output() -> None:
+    datasets_logging.set_verbosity_error()
+    hub_logging.set_verbosity_error()
+
+    disable_progress_bars()
+    disable_hub_progress_bars()
