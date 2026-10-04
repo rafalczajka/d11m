@@ -23,7 +23,7 @@ class ByteBPETokenizer:
 
     def train(
         self,
-        text: str,
+        texts: Iterable[str],
         vocab_size: int,
         min_frequency: int = 2,
     ) -> None:
@@ -36,12 +36,18 @@ class ByteBPETokenizer:
         self.merges.clear()
         self.vocab = {token_id: bytes([token_id]) for token_id in range(256)}
 
-        tokens = list(text.encode('utf-8'))
+        documents = [list(text.encode('utf-8')) for text in texts]
+
+        if not documents:
+            raise ValueError('Training data is empty.')
 
         next_token_id = self.FIRST_MERGE_TOKEN
 
         while next_token_id < vocab_size:
-            pair_counts = Counter(itertools.pairwise(tokens))
+            pair_counts: Counter[tuple[int, int]] = Counter()
+
+            for tokens in documents:
+                pair_counts.update(itertools.pairwise(tokens))
 
             if not pair_counts:
                 break
@@ -57,11 +63,14 @@ class ByteBPETokenizer:
 
             self.vocab[next_token_id] = self.vocab[left_token] + self.vocab[right_token]
 
-            tokens = self._merge_pair(
-                tokens=tokens,
-                pair=best_pair,
-                new_token=next_token_id,
-            )
+            documents = [
+                self._merge_pair(
+                    tokens=tokens,
+                    pair=best_pair,
+                    new_token=next_token_id,
+                )
+                for tokens in documents
+            ]
 
             next_token_id += 1
 

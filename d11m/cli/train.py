@@ -8,11 +8,12 @@ from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
 from ..checkpoint import load_checkpoint, load_tokenizer, save_checkpoint
+from ..data import DATASETS
 from ..dataset import Dataset
 from ..model import Model
 from ..tokenizer import ByteBPETokenizer
 from ..training import train_gen
-from ._common import CHECKPOINT_PATH, get_device
+from ._common import CHECKPOINT_PATH, get_device, load_texts
 from ._validation import positive_int, validate_checkpoint_path, validate_tokenizer_path
 
 DEFAULT_TOKENIZER_FILE = 'tokenizer.json'
@@ -20,7 +21,8 @@ LEARNING_RATE = 0.001
 
 
 def configure_parser(parser: ArgumentParser) -> None:
-    parser.add_argument('text', help='Training text.')
+    parser.add_argument('--dataset', choices=DATASETS, required=True)
+    parser.add_argument('--max-samples', type=positive_int)
     parser.add_argument('--tokenizer', type=Path, default=DEFAULT_TOKENIZER_FILE)
     parser.add_argument('--context-size', type=positive_int, default=128)
     parser.add_argument('--batch-size', type=positive_int, default=32)
@@ -67,9 +69,7 @@ def _load_training_components(
         lr=LEARNING_RATE,
     )
 
-    optimizer.load_state_dict(
-        optimizer_state
-    )
+    optimizer.load_state_dict(optimizer_state)
 
     return model, tokenizer, optimizer
 
@@ -94,14 +94,20 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
             device=device,
         )
 
-    tokens = [
-        tokenizer.BOS,
-        *tokenizer.encode(args.text),
-        tokenizer.EOS,
-    ]
+    texts = load_texts(parser, args.dataset, args.max_samples)
+    tokens: list[int] = []
+
+    for text in texts:
+        tokens.extend(
+            [
+                tokenizer.BOS,
+                *tokenizer.encode(text),
+                tokenizer.EOS,
+            ]
+        )
 
     if len(tokens) <= model.context_size:
-        parser.error('Training text with BOS and EOS must be longer than context size.')
+        parser.error('Training data with BOS and EOS must be longer than context size.')
 
     data_loader = _create_data_loader(
         tokens=tokens,
