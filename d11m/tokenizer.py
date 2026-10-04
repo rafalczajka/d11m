@@ -27,6 +27,19 @@ class ByteBPETokenizer:
         vocab_size: int,
         min_frequency: int = 2,
     ) -> None:
+        for _ in self.train_gen(
+            texts,
+            vocab_size,
+            min_frequency,
+        ):
+            pass
+
+    def train_gen(
+        self,
+        texts: Iterable[str],
+        vocab_size: int,
+        min_frequency: int = 2,
+    ) -> Iterator[int]:
         if vocab_size < self.FIRST_MERGE_TOKEN:
             raise ValueError(f'vocab_size must be at least {self.FIRST_MERGE_TOKEN}')
 
@@ -73,6 +86,7 @@ class ByteBPETokenizer:
             ]
 
             next_token_id += 1
+            yield self.vocab_size
 
     def encode(self, text: str) -> list[int]:
         tokens = list(text.encode('utf-8'))

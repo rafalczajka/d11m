@@ -1,6 +1,8 @@
 from argparse import ArgumentParser, Namespace
 from pathlib import Path
 
+from tqdm.auto import tqdm
+
 from ...checkpoint import save_tokenizer
 from ...data import DATASETS
 from ...tokenizer import ByteBPETokenizer
@@ -23,7 +25,11 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
     tokenizer = ByteBPETokenizer()
 
     texts = load_texts(parser, args.dataset, args.max_samples)
-    tokenizer.train(texts, args.vocab_size, args.min_frequency)
+    total_merges = args.vocab_size - tokenizer.FIRST_MERGE_TOKEN
+
+    with tqdm(total=total_merges, desc='Training tokenizer', unit='merge') as progress:
+        for _ in tokenizer.train_gen(texts, args.vocab_size, args.min_frequency):
+            progress.update(1)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     save_tokenizer(tokenizer, args.output)
