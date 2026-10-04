@@ -109,8 +109,11 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
     if len(tokens) <= model.context_size:
         parser.error('Training data with BOS and EOS must be longer than context size.')
 
+    token_tensor = torch.tensor(tokens, dtype=torch.long)
+    del tokens
+
     data_loader = _create_data_loader(
-        tokens=tokens,
+        tokens=token_tensor,
         context_size=model.context_size,
         batch_size=args.batch_size,
     )
@@ -134,12 +137,12 @@ def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
 
 
 def _create_data_loader(
-    tokens: list[int],
+    tokens: Tensor,
     context_size: int,
     batch_size: int,
 ) -> DataLoader[tuple[Tensor, Tensor]]:
     dataset = Dataset(
-        torch.tensor(tokens, dtype=torch.long),
+        tokens,
         context_size=context_size,
     )
 

@@ -70,20 +70,20 @@ class ByteBPETokenizer:
             if frequency < min_frequency:
                 break
 
+            del pair_counts
+
             self.merges[best_pair] = next_token_id
-
             left_token, right_token = best_pair
-
             self.vocab[next_token_id] = self.vocab[left_token] + self.vocab[right_token]
 
-            documents = [
-                self._merge_pair(
+            for index, tokens in enumerate(documents):
+                documents[index] = self._merge_pair(
                     tokens=tokens,
                     pair=best_pair,
                     new_token=next_token_id,
                 )
-                for tokens in documents
-            ]
+
+            del tokens
 
             next_token_id += 1
             yield self.vocab_size
