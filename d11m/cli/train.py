@@ -34,46 +34,6 @@ def configure_parser(parser: ArgumentParser) -> None:
     parser.set_defaults(handler=run, command_parser=parser)
 
 
-def _create_training_components(
-    tokenizer_path: Path,
-    context_size: int,
-    embedding_dim: int,
-    number_of_layers: int,
-    device: torch.device,
-) -> tuple[Model, ByteBPETokenizer, Optimizer]:
-    tokenizer = load_tokenizer(tokenizer_path)
-
-    model = Model(
-        vocab_size=tokenizer.vocab_size,
-        context_size=context_size,
-        embedding_dim=embedding_dim,
-        number_of_layers=number_of_layers,
-    ).to(device)
-
-    optimizer = AdamW(
-        model.parameters(),
-        lr=LEARNING_RATE,
-    )
-
-    return model, tokenizer, optimizer
-
-
-def _load_training_components(
-    checkpoint_path: Path,
-    device: torch.device,
-) -> tuple[Model, ByteBPETokenizer, Optimizer]:
-    model, tokenizer, optimizer_state = load_checkpoint(checkpoint_path, device)
-
-    optimizer = AdamW(
-        model.parameters(),
-        lr=LEARNING_RATE,
-    )
-
-    optimizer.load_state_dict(optimizer_state)
-
-    return model, tokenizer, optimizer
-
-
 def run(args: Namespace, parser: ArgumentParser) -> None:
     _validate_args(args, parser)
 
@@ -134,6 +94,46 @@ def _validate_args(args: Namespace, parser: ArgumentParser) -> None:
         validate_checkpoint_path(args.checkpoint, parser)
     else:
         validate_tokenizer_path(args.tokenizer, parser)
+
+
+def _create_training_components(
+    tokenizer_path: Path,
+    context_size: int,
+    embedding_dim: int,
+    number_of_layers: int,
+    device: torch.device,
+) -> tuple[Model, ByteBPETokenizer, Optimizer]:
+    tokenizer = load_tokenizer(tokenizer_path)
+
+    model = Model(
+        vocab_size=tokenizer.vocab_size,
+        context_size=context_size,
+        embedding_dim=embedding_dim,
+        number_of_layers=number_of_layers,
+    ).to(device)
+
+    optimizer = AdamW(
+        model.parameters(),
+        lr=LEARNING_RATE,
+    )
+
+    return model, tokenizer, optimizer
+
+
+def _load_training_components(
+    checkpoint_path: Path,
+    device: torch.device,
+) -> tuple[Model, ByteBPETokenizer, Optimizer]:
+    model, tokenizer, optimizer_state = load_checkpoint(checkpoint_path, device)
+
+    optimizer = AdamW(
+        model.parameters(),
+        lr=LEARNING_RATE,
+    )
+
+    optimizer.load_state_dict(optimizer_state)
+
+    return model, tokenizer, optimizer
 
 
 def _create_data_loader(
