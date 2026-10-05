@@ -3,7 +3,7 @@ from pathlib import Path
 
 import torch
 from torch import Tensor
-from torch.optim import AdamW, Optimizer
+from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
@@ -12,12 +12,11 @@ from ..data import DATASETS
 from ..dataset import Dataset
 from ..model import Model
 from ..tokenizer import ByteBPETokenizer
-from ..training import train_gen
+from ..training import create_optimizer, train_gen
 from ._common import CHECKPOINT_PATH, get_device, load_texts
 from ._validation import positive_int, validate_checkpoint_path, validate_tokenizer_path
 
 DEFAULT_TOKENIZER_FILE = 'tokenizer.json'
-LEARNING_RATE = 0.001
 
 
 def configure_parser(parser: ArgumentParser) -> None:
@@ -112,11 +111,7 @@ def _create_training_components(
         number_of_layers=number_of_layers,
     ).to(device)
 
-    optimizer = AdamW(
-        model.parameters(),
-        lr=LEARNING_RATE,
-    )
-
+    optimizer = create_optimizer(model)
     return model, tokenizer, optimizer
 
 
@@ -125,14 +120,7 @@ def _load_training_components(
     device: torch.device,
 ) -> tuple[Model, ByteBPETokenizer, Optimizer]:
     model, tokenizer, optimizer_state = load_checkpoint(checkpoint_path, device)
-
-    optimizer = AdamW(
-        model.parameters(),
-        lr=LEARNING_RATE,
-    )
-
-    optimizer.load_state_dict(optimizer_state)
-
+    optimizer = create_optimizer(model, optimizer_state)
     return model, tokenizer, optimizer
 
 

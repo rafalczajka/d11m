@@ -1,12 +1,31 @@
 from collections.abc import Iterator
+from typing import Any
 
 import torch
 import torch.nn.functional as F
 from torch import Tensor
-from torch.optim import Optimizer
+from torch.optim import AdamW, Optimizer
 from torch.utils.data import DataLoader
 
 from .model import Model
+
+LEARNING_RATE = 0.001
+
+
+def create_optimizer(
+    model: Model,
+    optimizer_state: dict[str, Any] | None = None,
+    learning_rate: float = LEARNING_RATE,
+) -> Optimizer:
+    optimizer = AdamW(
+        model.parameters(),
+        lr=learning_rate,
+    )
+
+    if optimizer_state is not None:
+        optimizer.load_state_dict(optimizer_state)
+
+    return optimizer
 
 
 def train(

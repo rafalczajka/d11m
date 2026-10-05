@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Any
 
 import torch
 from torch.optim import Optimizer
@@ -29,7 +30,10 @@ def save_checkpoint(
     )
 
 
-def load_checkpoint(path: Path, device: torch.device) -> tuple[Model, ByteBPETokenizer, dict]:
+def load_checkpoint(
+    path: Path,
+    device: torch.device,
+) -> tuple[Model, ByteBPETokenizer, dict[str, Any]]:
     checkpoint = torch.load(path, map_location=device, weights_only=True)
     config = checkpoint['config']
 
