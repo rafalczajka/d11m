@@ -1,6 +1,6 @@
+import hashlib
 from collections.abc import Iterator
 from dataclasses import dataclass
-from itertools import islice
 
 from datasets import disable_progress_bars, load_dataset
 from datasets.utils import logging as datasets_logging
@@ -12,16 +12,19 @@ from huggingface_hub.utils import disable_progress_bars as disable_hub_progress_
 class DatasetSource:
     path: str
     config: str | None
-    split: str
+    hf_split: str
     text_field: str
+    id_field: str
+    default_split: str = 'train'
 
 
 DATASETS: dict[str, DatasetSource] = {
     'wikipedia-pl': DatasetSource(
         path='wikimedia/wikipedia',
         config='20231101.pl',
-        split='train',
+        hf_split='train',
         text_field='text',
+        id_field='id',
     ),
 }
 
@@ -38,14 +41,28 @@ def load_texts(
         raise ValueError('max_samples must be positive.')
 
     source = DATASETS[name]
+    requested_split = source.default_split if split is None else split
+
+    if requested_split not in ('train', 'validation', 'test'):
+        raise ValueError(f'Unknown split: {requested_split}. Available splits: train, validation, test.')
 
     dataset = load_dataset(
         source.path,
         name=source.config,
-        split=source.split if split is None else split,
+        split=source.hf_split,
     )
 
-    for record in islice(dataset, max_samples):
+    samples = 0
+
+    for record in dataset:
+        record_id = record.get(source.id_field)
+
+        if not isinstance(record_id, (str, int)) or record_id == '':
+            raise ValueError(f'Dataset {name} must contain a stable string or integer ID field: {source.id_field}.')
+
+        if _get_split(str(record_id)) != requested_split:
+            continue
+
         text = record.get(source.text_field)
 
         if not isinstance(text, str):
@@ -53,6 +70,10 @@ def load_texts(
 
         if text.strip():
             yield text
+            samples += 1
+
+            if max_samples is not None and samples >= max_samples:
+                return
 
 
 def configure_huggingface_output() -> None:
@@ -61,3 +82,16 @@ def configure_huggingface_output() -> None:
 
     disable_progress_bars()
     disable_hub_progress_bars()
+
+
+def _get_split(record_id: str) -> str:
+    digest = hashlib.sha256(record_id.encode('utf-8')).digest()
+    bucket = int.from_bytes(digest[:4], byteorder='big') % 100
+
+    if bucket < 90:
+        return 'train'
+
+    if bucket < 95:
+        return 'validation'
+
+    return 'test'
