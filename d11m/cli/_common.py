@@ -18,19 +18,21 @@ def load_texts(
     parser: ArgumentParser,
     dataset: str,
     max_samples: int | None,
+    split: str = 'train',
 ) -> Iterator[str]:
     has_text = False
 
     try:
         texts = load_data_texts(
             dataset,
+            split=split,
             max_samples=max_samples,
         )
 
         for text in tqdm(
             texts,
             total=max_samples,
-            desc='Loading data',
+            desc=f'Loading {split} data',
             unit='sample',
         ):
             has_text = True
@@ -39,4 +41,4 @@ def load_texts(
         parser.error(str(error))
 
     if not has_text:
-        parser.error('Training data is empty.')
+        parser.error(f'{split.capitalize()} data is empty.')

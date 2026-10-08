@@ -12,7 +12,7 @@ from ..data import DATASETS
 from ..dataset import Dataset
 from ..model import Model
 from ..tokenizer import ByteBPETokenizer
-from ..training import create_optimizer, train_gen
+from ..training import create_optimizer, evaluate, train_gen
 from ._common import CHECKPOINT_PATH, get_device, load_texts
 from ._validation import positive_int, validate_checkpoint_path, validate_tokenizer_path
 
@@ -22,6 +22,7 @@ DEFAULT_TOKENIZER_FILE = 'tokenizer.json'
 def configure_parser(parser: ArgumentParser) -> None:
     parser.add_argument('--dataset', choices=DATASETS, required=True)
     parser.add_argument('--max-samples', type=positive_int)
+    parser.add_argument('--validation-max-samples', type=positive_int, default=1_000)
     parser.add_argument('--tokenizer', type=Path, default=DEFAULT_TOKENIZER_FILE)
     parser.add_argument('--context-size', type=positive_int, default=128)
     parser.add_argument('--batch-size', type=positive_int, default=32)
@@ -53,33 +54,38 @@ def run(args: Namespace, parser: ArgumentParser) -> None:
             device=device,
         )
 
-    texts = load_texts(parser, args.dataset, args.max_samples)
-    tokens: list[int] = []
-
-    for text in texts:
-        tokens.extend(
-            [
-                tokenizer.BOS,
-                *tokenizer.encode(text),
-                tokenizer.EOS,
-            ]
-        )
-
-    if len(tokens) <= model.context_size:
-        parser.error('Training data with BOS and EOS must be longer than context size.')
-
-    token_tensor = torch.tensor(tokens, dtype=torch.long)
-    del tokens
-
     data_loader = _create_data_loader(
-        tokens=token_tensor,
+        tokens=_load_token_tensor(
+            parser=parser,
+            tokenizer=tokenizer,
+            dataset=args.dataset,
+            split='train',
+            max_samples=args.max_samples,
+            context_size=model.context_size,
+        ),
         context_size=model.context_size,
         batch_size=args.batch_size,
+        shuffle=True,
+    )
+
+    validation_loader = _create_data_loader(
+        tokens=_load_token_tensor(
+            parser=parser,
+            tokenizer=tokenizer,
+            dataset=args.dataset,
+            split='validation',
+            max_samples=args.validation_max_samples,
+            context_size=model.context_size,
+        ),
+        context_size=model.context_size,
+        batch_size=args.batch_size,
+        shuffle=False,
     )
 
     _train_and_show_progress(
         model=model,
         data_loader=data_loader,
+        validation_loader=validation_loader,
         epochs=args.epochs,
         optimizer=optimizer,
     )
@@ -124,10 +130,39 @@ def _load_training_components(
     return model, tokenizer, optimizer
 
 
+def _load_token_tensor(
+    parser: ArgumentParser,
+    tokenizer: ByteBPETokenizer,
+    dataset: str,
+    split: str,
+    max_samples: int | None,
+    context_size: int,
+) -> Tensor:
+    texts = load_texts(parser, dataset, max_samples, split=split)
+    tokens: list[int] = []
+
+    for text in texts:
+        tokens.extend(
+            [
+                tokenizer.BOS,
+                *tokenizer.encode(text),
+                tokenizer.EOS,
+            ]
+        )
+
+    if len(tokens) <= context_size:
+        parser.error(f'{split.capitalize()} data with BOS and EOS must be longer than context size.')
+
+    token_tensor = torch.tensor(tokens, dtype=torch.long)
+    del tokens
+    return token_tensor
+
+
 def _create_data_loader(
     tokens: Tensor,
     context_size: int,
     batch_size: int,
+    shuffle: bool,
 ) -> DataLoader[tuple[Tensor, Tensor]]:
     dataset = Dataset(
         tokens,
@@ -137,13 +172,14 @@ def _create_data_loader(
     return DataLoader(
         dataset,
         batch_size=batch_size,
-        shuffle=True,
+        shuffle=shuffle,
     )
 
 
 def _train_and_show_progress(
     model: Model,
     data_loader: DataLoader[tuple[Tensor, Tensor]],
+    validation_loader: DataLoader[tuple[Tensor, Tensor]],
     epochs: int,
     optimizer: Optimizer,
 ) -> None:
@@ -154,8 +190,19 @@ def _train_and_show_progress(
         optimizer=optimizer,
     )
 
-    with tqdm(total=epochs * len(data_loader), unit='batch') as progress:
-        for epoch, average_loss in results:
+    batches_per_epoch = len(data_loader)
+
+    with tqdm(total=epochs * batches_per_epoch, unit='batch') as progress:
+        for batch, (epoch, average_loss) in enumerate(results, start=1):
             progress.set_description(f'Epoch {epoch}/{epochs}', refresh=False)
-            progress.set_postfix(loss=f'{average_loss:.4f}', refresh=False)
+            progress.set_postfix(train_loss=f'{average_loss:.4f}', refresh=False)
             progress.update(1)
+
+            if batch % batches_per_epoch == 0:
+                validation_loss = evaluate(model, validation_loader)
+
+                progress.write(
+                    f'Epoch {epoch}/{epochs} — '
+                    f'train loss: {average_loss:.4f}, '
+                    f'validation loss: {validation_loss:.4f}'
+                )

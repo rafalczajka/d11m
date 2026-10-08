@@ -62,13 +62,7 @@ def train_gen(
 
             optimizer.zero_grad()
 
-            logits = model(input_tokens)
-
-            loss = F.cross_entropy(
-                logits.reshape(-1, logits.shape[-1]),
-                target_tokens.reshape(-1),
-            )
-
+            loss = _calculate_loss(model, input_tokens, target_tokens)
             loss.backward()
 
             torch.nn.utils.clip_grad_norm_(
@@ -79,9 +73,53 @@ def train_gen(
             optimizer.step()
 
             batch_tokens = target_tokens.numel()
-
             total_loss += loss.item() * batch_tokens
             total_tokens += batch_tokens
             average_loss = total_loss / total_tokens
 
             yield epoch + 1, average_loss
+
+
+def evaluate(
+    model: Model,
+    data_loader: DataLoader[tuple[Tensor, Tensor]],
+) -> float:
+    was_training = model.training
+    device = next(model.parameters()).device
+
+    total_loss = 0.0
+    total_tokens = 0
+
+    try:
+        model.eval()
+
+        with torch.inference_mode():
+            for input_tokens, target_tokens in data_loader:
+                input_tokens = input_tokens.to(device)
+                target_tokens = target_tokens.to(device)
+
+                loss = _calculate_loss(model, input_tokens, target_tokens)
+
+                batch_tokens = target_tokens.numel()
+                total_loss += loss.item() * batch_tokens
+                total_tokens += batch_tokens
+
+        if total_tokens == 0:
+            raise ValueError('Validation data contains no target tokens.')
+
+        return total_loss / total_tokens
+    finally:
+        model.train(was_training)
+
+
+def _calculate_loss(
+    model: Model,
+    input_tokens: Tensor,
+    target_tokens: Tensor,
+) -> Tensor:
+    logits = model(input_tokens)
+
+    return F.cross_entropy(
+        logits.reshape(-1, logits.shape[-1]),
+        target_tokens.reshape(-1),
+    )
